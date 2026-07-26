@@ -21,30 +21,50 @@ Open a terminal in `d:\Dev\Backend\book-app` and start the development server:
 npm run start:dev
 ```
 
-The server will start on `http://localhost:8080`. Here are some sample requests you can test using Postman or `curl`:
+The server will start on `http://localhost:8080`. 
 
-### Create a new Book
+### 1. Register a User
+```bash
+curl -X POST http://localhost:8080/auth/register \
+-H "Content-Type: application/json" \
+-d '{"name": "John Doe", "email": "john@example.com", "password": "password123"}'
+```
+
+### 2. Login
+```bash
+curl -X POST http://localhost:8080/auth/login \
+-H "Content-Type: application/json" \
+-d '{"email": "john@example.com", "password": "password123"}'
+```
+*Copy the `accessToken` from the response.*
+
+### 3. Get Authenticated User Profile
+```bash
+curl -H "Authorization: Bearer YOUR_ACCESS_TOKEN" http://localhost:8080/auth/profile
+```
+
+### 4. Access Protected Books Endpoints
+All `/books` endpoints are now protected and require the `accessToken` you got from logging in.
+
+#### Get all Books
+```bash
+curl -H "Authorization: Bearer YOUR_ACCESS_TOKEN" http://localhost:8080/books
+```
+
+#### Create a new Book
 ```bash
 curl -X POST http://localhost:8080/books \
 -H "Content-Type: application/json" \
+-H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
 -d '{"title": "The Hitchhiker'\''s Guide to the Galaxy", "author": "Douglas Adams", "publicationYear": 1979}'
 ```
 
-### Get all Books
+### 4. Refresh Token
+When your access token expires, use the `refreshToken` you got during login to get a new one:
 ```bash
-curl http://localhost:8080/books
-```
-
-### Update a Book
-```bash
-curl -X PATCH http://localhost:8080/books/1 \
+curl -X POST http://localhost:8080/auth/refresh \
 -H "Content-Type: application/json" \
--d '{"publicationYear": 1980}'
-```
-
-### Delete a Book
-```bash
-curl -X DELETE http://localhost:8080/books/1
+-d '{"refreshToken": "YOUR_REFRESH_TOKEN"}'
 ```
 
 ## OpenAPI / Swagger Documentation

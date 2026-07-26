@@ -1,11 +1,14 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { BooksService } from './books.service';
 import { CreateBookDto } from './dto/create-book.dto';
 import { UpdateBookDto } from './dto/update-book.dto';
 import { ResponseMessage } from '../common/decorators/response-message.decorator';
+import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 
 @ApiTags('books')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('books')
 export class BooksController {
   constructor(private readonly booksService: BooksService) {}
