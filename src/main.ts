@@ -26,10 +26,15 @@ async function bootstrap() {
   const config = new DocumentBuilder()
     .setTitle('Books API')
     .setDescription('The crude book API description')
-    .setVersion('1.0')
-    .addServer('http://localhost:8080', 'Local environment')
-    .build();
-  const documentFactory = () => SwaggerModule.createDocument(app, config);
+    .setVersion('1.0');
+    
+  if (process.env.NODE_ENV === 'production') {
+    config.addServer('https://book-app-ptl2.onrender.com', 'Production environment');
+  } else {
+    config.addServer('http://localhost:8080', 'Local environment');
+  }
+
+  const documentFactory = () => SwaggerModule.createDocument(app, config.build());
   SwaggerModule.setup('api-docs', app, documentFactory);
 
   await app.listen(process.env.PORT ?? 8080);
