@@ -1,4 +1,6 @@
-import { IsString, IsInt, IsNotEmpty } from 'class-validator';
+import { IsString, IsInt, IsNotEmpty, IsOptional } from 'class-validator';
+import { Type } from 'class-transformer';
+import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateBookDto {
   @IsString()
@@ -10,6 +12,11 @@ export class CreateBookDto {
   author: string;
 
   @IsInt()
+  @Type(() => Number)
   @IsNotEmpty()
   publicationYear: number;
+
+  @ApiProperty({ type: 'string', format: 'binary', required: false })
+  @IsOptional()
+  coverImage?: any;
 }

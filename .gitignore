@@ -51,3 +51,7 @@ database.sqlite-journal
 
 # testing
 /coverage
+
+# uploads
+/uploads/*
+!/uploads/books/.gitkeep

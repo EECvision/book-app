@@ -13,4 +13,7 @@ export class Book {
 
   @Column()
   publicationYear: number;
+
+  @Column({ nullable: true })
+  coverImage?: string;
 }

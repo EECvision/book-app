@@ -12,6 +12,7 @@ I've successfully created the simple CRUD Books API from scratch using NestJS.
    *   **Service & Controller:** Implemented all the standard CRUD logic to interact with the database.
 4. **Global Validation:** Enabled `ValidationPipe` globally in `main.ts` so the DTOs automatically validate incoming requests.
 5. **Swagger Integration:** Integrated `@nestjs/swagger` into `main.ts` using the Nest CLI compiler plugin.
+6. **File Uploads:** Configured Multer to accept `multipart/form-data` uploads for book covers, automatically storing them in the `uploads/books` folder and returning the static URL.
 
 ## How to test it
 
@@ -51,12 +52,22 @@ All `/books` endpoints are now protected and require the `accessToken` you got f
 curl -H "Authorization: Bearer YOUR_ACCESS_TOKEN" http://localhost:8080/books
 ```
 
-#### Create a new Book
+#### Create a new Book (JSON)
 ```bash
 curl -X POST http://localhost:8080/books \
 -H "Content-Type: application/json" \
 -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
 -d '{"title": "The Hitchhiker'\''s Guide to the Galaxy", "author": "Douglas Adams", "publicationYear": 1979}'
+```
+
+#### Create a new Book (with Cover Image)
+```bash
+curl -X POST http://localhost:8080/books \
+-H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+-F "title=Dune" \
+-F "author=Frank Herbert" \
+-F "publicationYear=1965" \
+-F "coverImage=@/path/to/your/image.jpg"
 ```
 
 ### 4. Refresh Token
@@ -80,3 +91,14 @@ And visit the interactive Swagger UI directly in your browser:
 **[http://localhost:8080/api-docs](http://localhost:8080/api-docs)**
 
 *(If you strictly need the raw JSON, it is served automatically at `http://localhost:8080/api-docs-json`)*
+
+## Static File Serving (Book Covers)
+
+Whenever you create a book with a cover image, the API stores the physical file in the local `uploads/books/` directory and saves the URL path string into the `coverImage` column of your SQLite database. 
+
+Because we configured the NestJS application as an Express server serving static assets, any image uploaded is instantly available in the browser via the `/uploads/...` URL route.
+
+For example, if the API returns a book with `"coverImage": "/uploads/books/1712398412-cover.png"`, your frontend can simply render:
+```html
+<img src="http://localhost:8080/uploads/books/1712398412-cover.png" alt="Book Cover" />
+```

@@ -1,5 +1,8 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe, UseGuards, UseInterceptors, UploadedFile, Req } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth, ApiConsumes } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
 import { BooksService } from './books.service';
 import { CreateBookDto } from './dto/create-book.dto';
 import { UpdateBookDto } from './dto/update-book.dto';
@@ -14,9 +17,25 @@ export class BooksController {
   constructor(private readonly booksService: BooksService) {}
 
   @Post()
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FileInterceptor('coverImage', {
+    storage: diskStorage({
+      destination: './uploads/books',
+      filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+        cb(null, `${uniqueSuffix}${extname(file.originalname)}`);
+      }
+    })
+  }))
   @ResponseMessage('Book created successfully')
-  async create(@Body() createBookDto: CreateBookDto) {
-    return { book: await this.booksService.create(createBookDto) };
+  async create(
+    @Body() createBookDto: CreateBookDto,
+    @Req() req: any,
+    @UploadedFile() file?: Express.Multer.File,
+  ) {
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    const coverImage = file ? `${baseUrl}/uploads/books/${file.filename}` : undefined;
+    return { book: await this.booksService.create(createBookDto, coverImage) };
   }
 
   @Get()
@@ -32,12 +51,26 @@ export class BooksController {
   }
 
   @Patch(':id')
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FileInterceptor('coverImage', {
+    storage: diskStorage({
+      destination: './uploads/books',
+      filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+        cb(null, `${uniqueSuffix}${extname(file.originalname)}`);
+      }
+    })
+  }))
   @ResponseMessage('Book updated successfully')
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateBookDto: UpdateBookDto,
+    @Req() req: any,
+    @UploadedFile() file?: Express.Multer.File,
   ) {
-    return { book: await this.booksService.update(id, updateBookDto) };
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    const coverImage = file ? `${baseUrl}/uploads/books/${file.filename}` : undefined;
+    return { book: await this.booksService.update(id, updateBookDto, coverImage) };
   }
 
   @Delete(':id')

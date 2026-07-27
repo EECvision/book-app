@@ -27,8 +27,11 @@ export class BooksService implements OnModuleInit {
     }
   }
 
-  async create(createBookDto: CreateBookDto): Promise<Book> {
-    const newBook = this.bookRepository.create(createBookDto);
+  async create(createBookDto: CreateBookDto, coverImage?: string): Promise<Book> {
+    const newBook = this.bookRepository.create({
+      ...createBookDto,
+      ...(coverImage && { coverImage }),
+    });
     return this.bookRepository.save(newBook);
   }
 
@@ -44,9 +47,12 @@ export class BooksService implements OnModuleInit {
     return book;
   }
 
-  async update(id: number, updateBookDto: UpdateBookDto): Promise<Book> {
+  async update(id: number, updateBookDto: UpdateBookDto, coverImage?: string): Promise<Book> {
     const book = await this.findOne(id);
     Object.assign(book, updateBookDto);
+    if (coverImage) {
+      book.coverImage = coverImage;
+    }
     return this.bookRepository.save(book);
   }
 
