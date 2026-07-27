@@ -14,7 +14,15 @@ I've successfully created the simple CRUD Books API from scratch using NestJS.
 5. **Swagger Integration:** Integrated `@nestjs/swagger` into `main.ts` using the Nest CLI compiler plugin.
 6. **File Uploads:** Configured Multer to accept `multipart/form-data` uploads for book covers, automatically storing them in the `uploads/books` folder and returning the static URL.
 
-## How to test it
+## Live Deployment
+
+The API has been deployed to production via Render using PostgreSQL and Cloudinary for image hosting.
+
+*   **Production Base URL:** `https://book-app-ptl2.onrender.com`
+*   **Interactive Swagger Docs:** [https://book-app-ptl2.onrender.com/api-docs](https://book-app-ptl2.onrender.com/api-docs)
+*   **Swagger Collection JSON:** `https://book-app-ptl2.onrender.com/api-docs-json`
+
+## How to test it locally
 
 Open a terminal in `d:\Dev\Backend\book-app` and start the development server:
 
