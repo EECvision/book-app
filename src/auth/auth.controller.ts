@@ -1,4 +1,5 @@
-import { Controller, Post, Get, Body, HttpCode, HttpStatus, Req, UseGuards } from '@nestjs/common';
+import { Controller, Post, Get, Body, HttpCode, HttpStatus, Req, UseGuards, Res, Headers } from '@nestjs/common';
+import type { Response } from 'express';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { RegisterDto, LoginDto, RefreshDto } from './dto/auth.dto';
@@ -12,30 +13,59 @@ export class AuthController {
 
   @Post('register')
   @ResponseMessage('Login successful') // The requested response matches Login response structure/message
-  async register(@Body() dto: RegisterDto) {
-    return this.authService.register(dto);
+  async register(
+    @Body() dto: RegisterDto,
+    @Res({ passthrough: true }) res: Response,
+    @Headers('x-auth-method') authMethod: string,
+  ) {
+    const result = await this.authService.register(dto);
+    if (authMethod === 'cookie') {
+      res.cookie('accessToken', result.tokens.accessToken, { httpOnly: true, sameSite: 'lax' });
+      res.cookie('refreshToken', result.tokens.refreshToken, { httpOnly: true, sameSite: 'lax' });
+    }
+    return result;
   }
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @ResponseMessage('Login successful')
-  async login(@Body() dto: LoginDto) {
-    return this.authService.login(dto);
+  async login(
+    @Body() dto: LoginDto,
+    @Res({ passthrough: true }) res: Response,
+    @Headers('x-auth-method') authMethod: string,
+  ) {
+    const result = await this.authService.login(dto);
+    if (authMethod === 'cookie') {
+      res.cookie('accessToken', result.tokens.accessToken, { httpOnly: true, sameSite: 'lax' });
+      res.cookie('refreshToken', result.tokens.refreshToken, { httpOnly: true, sameSite: 'lax' });
+    }
+    return result;
   }
 
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   @ResponseMessage('Token refreshed')
-  async refresh(@Body() dto: RefreshDto) {
-    // Note: We use the payload's user ID extracted from a valid refresh token.
-    // In a full implementation, you'd have a RefreshToken strategy.
-    // For simplicity, we just pass the raw string and let AuthService verify it.
-    // We decode the JWT to get the user ID without throwing if it's expired (to let refresh fail gracefully if needed, or we just verify it directly in service).
+  async refresh(
+    @Req() req: any,
+    @Body() dto: RefreshDto,
+    @Res({ passthrough: true }) res: Response,
+    @Headers('x-auth-method') authMethod: string,
+  ) {
+    const refreshToken = authMethod === 'cookie' ? req.cookies?.refreshToken : dto.refreshToken;
+    if (!refreshToken) {
+      const { UnauthorizedException } = require('@nestjs/common');
+      throw new UnauthorizedException('Refresh token missing');
+    }
+
     const jwtSecret = 'super-secret-refresh-key';
     const jwt = require('jsonwebtoken');
     try {
-      const decoded = jwt.verify(dto.refreshToken, jwtSecret);
-      return this.authService.refreshTokens(decoded.sub, dto.refreshToken);
+      const decoded = jwt.verify(refreshToken, jwtSecret);
+      const result = await this.authService.refreshTokens(decoded.sub, refreshToken);
+      if (authMethod === 'cookie') {
+        res.cookie('accessToken', result.tokens.accessToken, { httpOnly: true, sameSite: 'lax' });
+      }
+      return result;
     } catch (e) {
       // If refresh token is expired, we can throw standard error
       const { UnauthorizedException } = require('@nestjs/common');
@@ -48,8 +78,16 @@ export class AuthController {
   @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
   @ResponseMessage('Logged out successfully')
-  async logout(@Req() req: any) {
+  async logout(
+    @Req() req: any,
+    @Res({ passthrough: true }) res: Response,
+    @Headers('x-auth-method') authMethod: string,
+  ) {
     await this.authService.logout(req.user.id);
+    if (authMethod === 'cookie') {
+      res.clearCookie('accessToken');
+      res.clearCookie('refreshToken');
+    }
     return null;
   }
 
