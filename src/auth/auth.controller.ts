@@ -22,6 +22,7 @@ export class AuthController {
     if (authMethod === 'cookie') {
       res.cookie('accessToken', result.tokens.accessToken, { httpOnly: true, sameSite: 'lax' });
       res.cookie('refreshToken', result.tokens.refreshToken, { httpOnly: true, sameSite: 'lax' });
+      return { user: result.user };
     }
     return result;
   }
@@ -38,6 +39,7 @@ export class AuthController {
     if (authMethod === 'cookie') {
       res.cookie('accessToken', result.tokens.accessToken, { httpOnly: true, sameSite: 'lax' });
       res.cookie('refreshToken', result.tokens.refreshToken, { httpOnly: true, sameSite: 'lax' });
+      return { user: result.user };
     }
     return result;
   }
@@ -64,6 +66,7 @@ export class AuthController {
       const result = await this.authService.refreshTokens(decoded.sub, refreshToken);
       if (authMethod === 'cookie') {
         res.cookie('accessToken', result.tokens.accessToken, { httpOnly: true, sameSite: 'lax' });
+        return { success: true };
       }
       return result;
     } catch (e) {
