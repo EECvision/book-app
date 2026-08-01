@@ -11,7 +11,12 @@ import cookieParser from 'cookie-parser';
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   app.enableCors({
-    origin: ['http://localhost:5173', 'http://127.0.0.1:5173'],
+    origin: [
+      'http://localhost:5173', 
+      'http://127.0.0.1:5173',
+      'http://localhost:3000',
+      'https://reex-api-builder.toolshq.app'
+    ],
     credentials: true,
   });
   app.useStaticAssets(join(__dirname, '..', 'uploads'), {
