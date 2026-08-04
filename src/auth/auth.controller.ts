@@ -1,10 +1,19 @@
 import { Controller, Post, Get, Body, HttpCode, HttpStatus, Req, UseGuards, Res, Headers } from '@nestjs/common';
-import type { Response } from 'express';
+import type { Response, CookieOptions } from 'express';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { RegisterDto, LoginDto, RefreshDto } from './dto/auth.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { ResponseMessage } from '../common/decorators/response-message.decorator';
+
+const isProduction = process.env.NODE_ENV === 'production';
+
+const getCookieOptions = (): CookieOptions => ({
+  httpOnly: true,
+  secure: isProduction,
+  sameSite: isProduction ? 'none' : 'lax',
+  path: '/',
+});
 
 @ApiTags('auth')
 @Controller('auth')
@@ -20,8 +29,8 @@ export class AuthController {
   ) {
     const result = await this.authService.register(dto);
     if (authMethod === 'cookie') {
-      res.cookie('accessToken', result.tokens.accessToken, { httpOnly: true, sameSite: 'lax' });
-      res.cookie('refreshToken', result.tokens.refreshToken, { httpOnly: true, sameSite: 'lax' });
+      res.cookie('accessToken', result.tokens.accessToken, getCookieOptions());
+      res.cookie('refreshToken', result.tokens.refreshToken, getCookieOptions());
       return { user: result.user };
     }
     return result;
@@ -37,8 +46,8 @@ export class AuthController {
   ) {
     const result = await this.authService.login(dto);
     if (authMethod === 'cookie') {
-      res.cookie('accessToken', result.tokens.accessToken, { httpOnly: true, sameSite: 'lax' });
-      res.cookie('refreshToken', result.tokens.refreshToken, { httpOnly: true, sameSite: 'lax' });
+      res.cookie('accessToken', result.tokens.accessToken, getCookieOptions());
+      res.cookie('refreshToken', result.tokens.refreshToken, getCookieOptions());
       return { user: result.user };
     }
     return result;
@@ -65,7 +74,7 @@ export class AuthController {
       const decoded = jwt.verify(refreshToken, jwtSecret);
       const result = await this.authService.refreshTokens(decoded.sub, refreshToken);
       if (authMethod === 'cookie') {
-        res.cookie('accessToken', result.tokens.accessToken, { httpOnly: true, sameSite: 'lax' });
+        res.cookie('accessToken', result.tokens.accessToken, getCookieOptions());
         return { success: true };
       }
       return result;
@@ -88,8 +97,8 @@ export class AuthController {
   ) {
     await this.authService.logout(req.user.id);
     if (authMethod === 'cookie') {
-      res.clearCookie('accessToken');
-      res.clearCookie('refreshToken');
+      res.clearCookie('accessToken', getCookieOptions());
+      res.clearCookie('refreshToken', getCookieOptions());
     }
     return null;
   }
